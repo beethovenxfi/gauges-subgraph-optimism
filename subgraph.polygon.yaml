@@ -1,0 +1,85 @@
+specVersion: 0.0.2
+description: Liquidity Gauges of the Balancer Protocol
+repository: https://github.com/balancer-labs/gauges-subgraph/
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: ChildChainLiquidityGaugeFactory
+    # prettier-ignore
+    network: matic
+    source:
+      address: '0x3b8cA519122CdD8efb272b0D3085453404B25bD0'
+      abi: ChildChainLiquidityGaugeFactory
+      # prettier-ignore
+      startBlock: 27098624
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/gaugeFactory.ts
+      abis:
+        - name: ChildChainLiquidityGaugeFactory
+          file: ./abis/ChildChainLiquidityGaugeFactory.json
+        - name: RewardsOnlyGauge
+          file: ./abis/RewardsOnlyGauge.json
+        - name: LiquidityGauge
+          file: ./abis/LiquidityGaugeV5.json
+        - name: WeightedPool
+          file: ./abis/WeightedPool.json
+      entities:
+        - GaugeFactory
+        - LiquidityGauge
+      eventHandlers:
+        - event: RewardsOnlyGaugeCreated(indexed address,indexed address,address)
+          handler: handleRewardsOnlyGaugeCreated
+templates:
+  - kind: ethereum/contract
+    name: LiquidityGauge
+    # prettier-ignore
+    network: matic
+    source:
+      abi: LiquidityGauge
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/gauge.ts
+      entities:
+        - LiquidityGauge
+        - UserGaugeShare
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: LiquidityGauge
+          file: ./abis/LiquidityGaugeV5.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      callHandlers:
+        - function: deposit_reward_token(address,uint256)
+          handler: handleDepositRewardToken
+  - kind: ethereum/contract
+    name: RewardsOnlyGauge
+    # prettier-ignore
+    network: matic
+    source:
+      abi: RewardsOnlyGauge
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/gauge.ts
+      entities:
+        - LiquidityGauge
+        - UserGaugeShare
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: RewardsOnlyGauge
+          file: ./abis/RewardsOnlyGauge.json
+        - name: LiquidityGauge
+          file: ./abis/LiquidityGaugeV5.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer

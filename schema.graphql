@@ -1,0 +1,93 @@
+type VotingEscrow @entity {
+  id: ID!
+  stakedSupply: BigDecimal!
+  locks: [VotingEscrowLock!] @derivedFrom(field: "votingEscrowID")
+}
+
+type VotingEscrowLock @entity {
+  id: ID!
+  user: User!
+  unlockTime: BigInt
+  lockedBalance: BigDecimal!
+  votingEscrowID: VotingEscrow!
+}
+
+type GaugeFactory @entity {
+  id: ID!
+  numGauges: Int!
+  gauges: [LiquidityGauge!] @derivedFrom(field: "factory")
+}
+
+type LiquidityGauge @entity {
+  id: ID!
+  symbol: String!
+  poolAddress: Bytes!
+  poolId: Bytes!
+  streamer: Streamer!# ChildChainLiquidityGauge Only
+  factory: GaugeFactory!
+  totalSupply: BigDecimal!
+  shares: [GaugeShare!] @derivedFrom(field: "gauge")
+  tokens: [RewardToken!] @derivedFrom(field: "gauge")
+}
+
+enum Chain {
+  Arbitrum
+  Polygon
+}
+
+type RootGauge @entity {
+  id: ID!
+  chain: Chain!
+  recipient: Bytes!
+}
+
+type Gauge @entity {
+  id: ID!
+  address: Bytes!
+  type: GaugeType!
+}
+
+type RewardToken @entity {
+  id: ID!
+  address: Bytes!
+  name: String!
+  symbol: String!
+  decimals: Int!
+  gauge: LiquidityGauge!
+  streamer: Streamer
+  totalDeposited: BigDecimal!
+}
+
+type GaugeShare @entity {
+  id: ID!
+  user: User!
+  gauge: LiquidityGauge!
+  balance: BigDecimal!
+}
+
+type GaugeType @entity {
+  id: ID!
+  name: String!
+}
+
+type GaugeVote @entity {
+  id: ID!
+  user: User!
+  gauge: LiquidityGauge!
+  weight: BigDecimal
+  timestamp: BigInt
+}
+
+type User @entity {
+  id: ID!
+  gaugeVotes: [GaugeVote!] @derivedFrom(field: "user")
+  gaugeShares: [GaugeShare!] @derivedFrom(field: "user")
+  votingLocks: [VotingEscrowLock!] @derivedFrom(field: "user")
+}
+
+type Streamer @entity {
+  id: ID!
+  address: Bytes!
+  gauge: LiquidityGauge!
+  rewardTokens: [RewardToken!] @derivedFrom(field: "streamer")
+}
